@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Password Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        
+        :root {
+            --color-red: #ef4444;
+            --color-orange: #f97316;
+            --color-yellow: #facc15;
+            --color-green: #22c55e;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .container-card {
+            background-color: #ffffff;
+            box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.1), 0 5px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Custom range track and thumb styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Strength bar styling */
+        #strengthBar {
+            height: 8px;
+            border-radius: 4px;
+            transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
+            width: 0;
+        }
+    </style>
+</head>
+<body class="p-4 flex items-center justify-center min-h-screen">
+
+    <div class="w-full max-w-lg container-card p-6 md:p-8 rounded-2xl border border-gray-100">
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-2 text-center">🔐 Secure Password Generator</h1>
+        <p class="text-gray-500 mb-8 text-center">Create uncrackable passwords instantly.</p>
+
+        <!-- Output Display Area -->
+        <div class="mb-6 flex items-stretch space-x-2">
+            <input
+                type="text"
+                id="passwordOutput"
+                readonly
+                placeholder="Click Generate to begin"
+                class="flex-grow p-3 md:p-4 text-lg bg-gray-50 border border-gray-200 rounded-xl font-mono text-gray-700 select-all focus:ring-blue-500 focus:border-blue-500 overflow-hidden text-ellipsis"
+            />
+            <button
+                id="copyButton"
+                class="bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl px-3 transition duration-200 disabled:opacity-50 flex items-center justify-center text-sm md:text-base"
+                onclick="copyPassword()"
+                title="Copy to Clipboard"
+                disabled
+            >
+                <svg id="copyIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 md:w-6 md:h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125h3.375m8.25-1.125H18.75a1.125 1.125 0 0 1 1.125 1.125v9.75a1.125 1.125 0 0 1-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125h3.375m3.75 0V4.5a.75.75 0 0 0-.75-.75h-3.375a.75.75 0 0 0-.75.75v1.875" />
+                </svg>
+                <span id="copyText" class="ml-1 hidden sm:inline">Copy</span>
+            </button>
+        </div>
+
+        <!-- Strength Indicator -->
+        <div class="mb-8">
+            <div id="strengthBar" class="mb-1"></div>
+            <p id="strengthText" class="text-sm font-semibold text-gray-500"></p>
+        </div>
+
+        <!-- Settings Area -->
+        <div class="space-y-6 bg-gray-50 p-5 rounded-xl border border-gray-200">
+            
+            <!-- Hybrid Base Input -->
+            <div class="space-y-3 p-4 bg-gray-100 rounded-lg border border-gray-300">
+                <p class="font-bold text-gray-800 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2 text-blue-600">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9.75 9.75m0 0a2.25 2.25 0 1 0 0-4.5h.75m-7.5 7.5L4.5 18.75m0 0h.086m14.075 1.258L15 18.75m0 0h-.086m0 0v-5.25m0 0H9.75m0 0v-3m0 3h.375L12 10.5m-1.5 11.25c-2.485 0-4.5-2.015-4.5-4.5s2.015-4.5 4.5-4.5 4.5 2.015 4.5 4.5-2.015 4.5-4.5 4.5Zm-1.875-1.125h1.875m-1.875 0V17.25m0 0h1.875" />
+                    </svg>
+                    Hybrid Password Base
+                </p>
+                <input
+                    type="text"
+                    id="nameInput"
+                    placeholder="Your Name / Favorite Word"
+                    class="w-full p-2 border border-gray-300 rounded-lg text-gray-700"
+                    oninput="checkSettings()"
+                />
+                 <input
+                    type="text"
+                    id="dateInput"
+                    placeholder="Date (e.g., 1995 or 0315)"
+                    class="w-full p-2 border border-gray-300 rounded-lg text-gray-700"
+                    oninput="checkSettings()"
+                />
+                <div class="flex items-center">
+                    <input type="checkbox" id="useHybrid" class="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500" onchange="toggleHybridInputs(); checkSettings()" checked>
+                    <label for="useHybrid" class="ml-2 text-gray-700 select-none font-medium">Use Name/Date Base</label>
+                </div>
+            </div>
+
+            <!-- Length Slider -->
+            <div>
+                <div class="flex justify-between items-center mb-2">
+                    <label for="lengthSlider" class="text-gray-700 font-semibold">Random Character Length</label>
+                    <span id="lengthValue" class="text-xl font-bold text-blue-600">8</span>
+                </div>
+                <input
+                    type="range"
+                    id="lengthSlider"
+                    min="4"
+                    max="20"
+                    value="8"
+                    oninput="document.getElementById('lengthValue').textContent = this.value; checkSettings()"
+                />
+                 <p class="text-xs text-gray-500 mt-1">Total length will be: Base Length + Random Length.</p>
+            </div>
+
+            <!-- Checkbox Options -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="flex items-center">
+                    <input type="checkbox" id="includeUppercase" checked class="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500" onchange="checkSettings()">
+                    <label for="includeUppercase" class="ml-2 text-gray-700 select-none">Uppercase (A-Z)</label>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="includeLowercase" checked class="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500" onchange="checkSettings()">
+                    <label for="includeLowercase" class="ml-2 text-gray-700 select-none">Lowercase (a-z)</label>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="includeNumbers" checked class="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500" onchange="checkSettings()">
+                    <label for="includeNumbers" class="ml-2 text-gray-700 select-none">Numbers (0-9)</label>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="includeSymbols" class="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500" onchange="checkSettings()">
+                    <label for="includeSymbols" class="ml-2 text-gray-700 select-none">Symbols (!@#$)</label>
+                </div>
+            </div>
+
+            <!-- Generate Button -->
+            <button
+                id="generateButton"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition duration-200 shadow-lg shadow-blue-500/50 disabled:bg-gray-400 disabled:shadow-none"
+                onclick="generatePassword()"
+            >
+                Generate Password
+            </button>
+        </div>
+
+        <!-- Custom Alert Modal (Hidden by default) -->
+        <div id="alertModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center p-4 z-50">
+            <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full">
+                <h3 id="alertTitle" class="text-xl font-bold text-red-600 mb-4">Error</h3>
+                <p id="alertMessage" class="text-gray-700 mb-6"></p>
+                <button
+                    class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg"
+                    onclick="document.getElementById('alertModal').classList.add('hidden')"
+                >
+                    Got It
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Define character sets
+        const charSets = {
+            lowercase: 'abcdefghijklmnopqrstuvwxyz',
+            uppercase: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+            numbers: '0123456789',
+            symbols: '!@#$%^&*()_+[]{}|;:,.<>/?'
+        };
+
+        // DOM Elements
+        const passwordOutput = document.getElementById('passwordOutput');
+        const lengthSlider = document.getElementById('lengthSlider');
+        const includeUppercase = document.getElementById('includeUppercase');
+        const includeLowercase = document.getElementById('includeLowercase');
+        const includeNumbers = document.getElementById('includeNumbers');
+        const includeSymbols = document.getElementById('includeSymbols');
+        const generateButton = document.getElementById('generateButton');
+        const copyButton = document.getElementById('copyButton');
+        const strengthBar = document.getElementById('strengthBar');
+        const strengthText = document.getElementById('strengthText');
+        const copyIcon = document.getElementById('copyIcon');
+        const copyText = document.getElementById('copyText');
+        const useHybrid = document.getElementById('useHybrid');
+        const nameInput = document.getElementById('nameInput');
+        const dateInput = document.getElementById('dateInput');
+        const lengthValue = document.getElementById('lengthValue');
+
+        /**
+         * Displays a custom modal alert instead of the browser's alert().
+         */
+        const customAlert = (title, message) => {
+            document.getElementById('alertTitle').textContent = title;
+            document.getElementById('alertMessage').textContent = message;
+            document.getElementById('alertModal').classList.remove('hidden');
+            document.getElementById('alertModal').classList.add('flex');
+        };
+
+        /**
+         * Toggles the visibility/state of the Name/Date input fields.
+         */
+        const toggleHybridInputs = () => {
+            const isDisabled = !useHybrid.checked;
+            nameInput.disabled = isDisabled;
+            dateInput.disabled = isDisabled;
+            nameInput.parentElement.classList.toggle('opacity-50', isDisabled);
+
+            // Adjust the random length slider range when switching modes
+            lengthSlider.min = isDisabled ? 8 : 4;
+            lengthSlider.max = isDisabled ? 32 : 20;
+
+            // Ensure the value is within the new range
+            if (parseInt(lengthSlider.value) < lengthSlider.min) {
+                lengthSlider.value = lengthSlider.min;
+            } else if (parseInt(lengthSlider.value) > lengthSlider.max) {
+                 lengthSlider.value = lengthSlider.max;
+            }
+
+            // Update the display for the new length setting
+            lengthValue.textContent = lengthSlider.value;
+        };
+
+        /**
+         * Checks if at least one character set is selected and enables/disables the generate button.
+         */
+        const checkSettings = () => {
+            const isAnyChecked = includeUppercase.checked || includeLowercase.checked || includeNumbers.checked || includeSymbols.checked;
+            
+            let isHybridReady = true;
+            if (useHybrid.checked) {
+                // If hybrid is checked, require name and date
+                const nameReady = nameInput.value.trim().length > 0;
+                const dateReady = dateInput.value.trim().length > 0;
+                isHybridReady = nameReady && dateReady;
+            }
+
+            generateButton.disabled = !isAnyChecked || !isHybridReady;
+            
+            // Recalculate strength on setting change if a password already exists
+            if (passwordOutput.value) {
+                updateStrength(passwordOutput.value);
+            } else {
+                // Clear strength if no password is generated yet
+                updateStrength('');
+            }
+        };
+
+        /**
+         * Generates a strong password based on current settings (Hybrid or Random).
+         */
+        window.generatePassword = () => {
+            let password = '';
+            let characterPool = '';
+            const length = parseInt(lengthSlider.value, 10);
+            
+            // 1. Build the character pool
+            if (includeUppercase.checked) characterPool += charSets.uppercase;
+            if (includeLowercase.checked) characterPool += charSets.lowercase;
+            if (includeNumbers.checked) characterPool += charSets.numbers;
+            if (includeSymbols.checked) characterPool += charSets.symbols;
+
+            if (characterPool.length === 0) {
+                customAlert('Selection Error', 'Please select at least one character type (Uppercase, Lowercase, Numbers, or Symbols).');
+                return;
+            }
+
+            // 2. Generate the random part
+            let randomPart = '';
+            for (let i = 0; i < length; i++) {
+                const randomIndex = Math.floor(Math.random() * characterPool.length);
+                randomPart += characterPool[randomIndex];
+            }
+
+            // 3. Construct the final password
+            if (useHybrid.checked && nameInput.value.trim() && dateInput.value.trim()) {
+                const name = nameInput.value.trim().replace(/\s/g, ''); // Remove spaces from name
+                const date = dateInput.value.trim().replace(/\D/g, ''); // Keep only digits from date
+                
+                // Hybrid structure: Random | Date | Name | Random (split in half)
+                const splitIndex = Math.floor(randomPart.length / 2);
+                password = randomPart.substring(0, splitIndex) + 
+                           date + 
+                           name + 
+                           randomPart.substring(splitIndex);
+
+            } else {
+                // Standard Random generation if hybrid is not used or inputs are missing
+                password = randomPart;
+            }
+
+
+            // 4. Display and update strength
+            passwordOutput.value = password;
+            copyButton.disabled = false;
+            updateStrength(password);
+
+            // Reset copy button visual state
+            copyIcon.classList.remove('text-yellow-400');
+            copyIcon.classList.add('text-white');
+            copyText.textContent = 'Copy';
+            copyButton.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+            copyButton.classList.add('bg-green-500', 'hover:bg-green-600');
+        };
+
+        /**
+         * Calculates and displays the password strength.
+         */
+        const updateStrength = (password) => {
+            let score = 0;
+            const length = password.length;
+
+            // 1. Length Bonus
+            if (length >= 12) score += 2; 
+            if (length >= 16) score += 2;
+            if (length >= 20) score += 2; 
+
+            // 2. Character Type Bonus
+            if (/[a-z]/.test(password)) score += 1;
+            if (/[A-Z]/.test(password)) score += 1;
+            if (/\d/.test(password)) score += 1;
+            if (/[!@#$%^&*()_+[\]{}|;:,.<>?]/.test(password)) score += 1;
+            
+            // Maximum score is 10
+
+            // Map score to strength level (0-10)
+            let strengthLevel = '';
+            let barWidth = 0;
+            let barColor = '';
+            let textColor = 'text-gray-500';
+
+            if (score <= 2) {
+                strengthLevel = 'Very Weak';
+                barWidth = 20;
+                barColor = 'bg-red-500';
+                textColor = 'text-red-500';
+            } else if (score <= 4) {
+                strengthLevel = 'Weak';
+                barWidth = 40;
+                barColor = 'bg-orange-500';
+                textColor = 'text-orange-500';
+            } else if (score <= 6) {
+                strengthLevel = 'Medium';
+                barWidth = 60;
+                barColor = 'bg-yellow-500';
+                textColor = 'text-yellow-600';
+            } else if (score <= 8) {
+                strengthLevel = 'Strong';
+                barWidth = 80;
+                barColor = 'bg-lime-500';
+                textColor = 'text-lime-600';
+            } else {
+                strengthLevel = 'Excellent!';
+                barWidth = 100;
+                barColor = 'bg-green-500';
+                textColor = 'text-green-600';
+            }
+
+            // Update UI
+            strengthText.textContent = `Strength: ${strengthLevel}`;
+            strengthText.className = `text-sm font-bold ${textColor}`;
+            
+            strengthBar.style.width = `${barWidth}%`;
+            strengthBar.className = barColor;
+        };
+
+        /**
+         * Copies the generated password to the clipboard.
+         */
+        window.copyPassword = () => {
+            const password = passwordOutput.value;
+            if (!password) return;
+
+            // Using document.execCommand('copy') as navigator.clipboard.writeText() 
+            // may be restricted in some iframe environments.
+            try {
+                passwordOutput.select();
+                document.execCommand('copy');
+
+                // Visual feedback for successful copy
+                copyText.textContent = 'Copied!';
+                copyButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+                copyButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+                copyIcon.classList.remove('text-white');
+                copyIcon.classList.add('text-yellow-400');
+
+                // Reset text after a delay
+                setTimeout(() => {
+                    copyText.textContent = 'Copy';
+                    copyButton.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                    copyButton.classList.add('bg-green-500', 'hover:bg-green-600');
+                    copyIcon.classList.remove('text-yellow-400');
+                    copyIcon.classList.add('text-white');
+                }, 2000);
+
+            } catch (err) {
+                console.error('Failed to copy password:', err);
+                customAlert('Copy Error', 'Could not automatically copy to clipboard. Please manually select and copy the password.');
+            }
+        };
+
+        // Initialize state on load
+        window.onload = () => {
+            toggleHybridInputs(); // Set initial slider range and input state
+            checkSettings(); // Run once to set initial button state
+        };
+    </script>
+</body>
+</html>
+
